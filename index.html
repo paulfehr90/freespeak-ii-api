@@ -1,0 +1,1745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FreeSpeak II — API Reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root {
+  --bg-0: #0a0b0d;
+  --bg-1: #111318;
+  --bg-2: #181b22;
+  --bg-3: #1f232c;
+  --bg-4: #282d38;
+  --border: #2a2f3a;
+  --border-hi: #3a4050;
+  --text-0: #e8eaf0;
+  --text-1: #b0b8c8;
+  --text-2: #7a8498;
+  --text-3: #4e5668;
+  --accent: #3b82f6;
+  --accent-dim: #1e3a6e;
+  --green: #22c55e;
+  --green-dim: rgba(34,197,94,.12);
+  --amber: #f59e0b;
+  --amber-dim: rgba(245,158,11,.12);
+  --red: #ef4444;
+  --red-dim: rgba(239,68,68,.12);
+  --purple: #a78bfa;
+  --purple-dim: rgba(167,139,250,.12);
+  --cyan: #22d3ee;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'DM Sans', system-ui, sans-serif;
+}
+
+html { font-size: 15px; scroll-behavior: smooth; }
+body {
+  font-family: var(--sans);
+  background: var(--bg-0);
+  color: var(--text-1);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-1); }
+::-webkit-scrollbar-thumb { background: var(--bg-4); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+/* ── LAYOUT ── */
+.shell {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 100vh;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  position: sticky; top: 0; height: 100vh;
+  background: var(--bg-1);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  display: flex; flex-direction: column;
+  z-index: 10;
+}
+.sidebar-header {
+  padding: 24px 20px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-header .logo-label {
+  font-family: var(--mono);
+  font-size: .65rem;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 6px;
+}
+.sidebar-header h1 {
+  font-family: var(--mono);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-0);
+  line-height: 1.2;
+}
+.sidebar-header h1 span { color: var(--accent); }
+.sidebar-header .meta {
+  font-family: var(--mono);
+  font-size: .7rem;
+  color: var(--text-3);
+  margin-top: 8px;
+  display: flex; gap: 12px;
+}
+.sidebar-header .meta .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 4px;
+  position: relative; top: -1px;
+}
+.sidebar-header .meta .dot.on { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.sidebar-header .meta .dot.off { background: var(--text-3); }
+
+.sidebar-search {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-search input {
+  width: 100%;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--text-0);
+  font-family: var(--mono);
+  font-size: .75rem;
+  padding: 8px 10px;
+  border-radius: 4px;
+  outline: none;
+  transition: border-color .2s;
+}
+.sidebar-search input:focus { border-color: var(--accent); }
+.sidebar-search input::placeholder { color: var(--text-3); }
+
+.nav { flex: 1; padding: 8px 0; overflow-y: auto; }
+.nav-group { margin-bottom: 4px; }
+.nav-group-label {
+  font-family: var(--mono);
+  font-size: .6rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding: 12px 20px 4px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 20px;
+  font-size: .82rem;
+  color: var(--text-2);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all .15s;
+  border-left: 2px solid transparent;
+}
+.nav-item:hover { color: var(--text-0); background: var(--bg-2); }
+.nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-dim); }
+.nav-item .method-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── MAIN ── */
+.main { padding: 0; overflow-y: auto; }
+.main-inner { max-width: 960px; margin: 0 auto; padding: 40px 48px 120px; }
+
+/* Hero */
+.hero {
+  margin-bottom: 48px;
+  padding-bottom: 40px;
+  border-bottom: 1px solid var(--border);
+}
+.hero h2 {
+  font-family: var(--mono);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text-0);
+  margin-bottom: 12px;
+}
+.hero p { color: var(--text-2); max-width: 640px; line-height: 1.7; }
+.hero .badges {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-top: 20px;
+}
+.badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--mono);
+  font-size: .7rem;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  color: var(--text-2);
+}
+.badge .val { color: var(--text-0); }
+
+/* Connection panel */
+.conn-panel {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 20px 24px;
+  margin-bottom: 40px;
+}
+.conn-panel h3 {
+  font-family: var(--mono);
+  font-size: .75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--text-2);
+  margin-bottom: 14px;
+}
+.conn-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 10px;
+  align-items: end;
+}
+.conn-field label {
+  display: block;
+  font-family: var(--mono);
+  font-size: .65rem;
+  color: var(--text-3);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.conn-field input {
+  width: 100%;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--text-0);
+  font-family: var(--mono);
+  font-size: .8rem;
+  padding: 8px 10px;
+  border-radius: 4px;
+  outline: none;
+}
+.conn-field input:focus { border-color: var(--accent); }
+.conn-btn {
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--mono);
+  font-size: .75rem;
+  font-weight: 600;
+  padding: 9px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: opacity .2s;
+  white-space: nowrap;
+}
+.conn-btn:hover { opacity: .85; }
+.conn-status {
+  font-family: var(--mono);
+  font-size: .7rem;
+  margin-top: 10px;
+  color: var(--text-3);
+}
+.conn-status.ok { color: var(--green); }
+.conn-status.err { color: var(--red); }
+
+/* Sections */
+.section {
+  margin-bottom: 48px;
+  scroll-margin-top: 24px;
+}
+.section-head {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.section-icon { display: none; }
+.section-head h3 {
+  font-family: var(--mono);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-0);
+}
+.section-head .count {
+  font-family: var(--mono);
+  font-size: .65rem;
+  color: var(--text-3);
+  background: var(--bg-3);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+.section-desc {
+  color: var(--text-2);
+  font-size: .88rem;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+/* Endpoint cards */
+.endpoint {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  transition: border-color .2s;
+}
+.endpoint:hover { border-color: var(--border-hi); }
+.endpoint-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 18px;
+  cursor: pointer;
+  user-select: none;
+}
+.endpoint-header:hover { background: var(--bg-3); }
+.method {
+  font-family: var(--mono);
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+  padding: 3px 8px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  min-width: 52px;
+  text-align: center;
+}
+.method.get { background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,197,94,.2); }
+.method.post { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(245,158,11,.2); }
+.method.put { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(167,139,250,.2); }
+.method.delete { background: var(--red-dim); color: var(--red); border: 1px solid rgba(239,68,68,.2); }
+
+.endpoint-path {
+  font-family: var(--mono);
+  font-size: .82rem;
+  color: var(--text-0);
+  flex: 1;
+}
+.endpoint-path .param { color: var(--cyan); }
+.endpoint-summary {
+  font-size: .78rem;
+  color: var(--text-3);
+  margin-left: auto;
+  white-space: nowrap;
+}
+.endpoint-chevron {
+  color: var(--text-3);
+  font-size: .7rem;
+  transition: transform .2s;
+  margin-left: 4px;
+}
+.endpoint.open .endpoint-chevron { transform: rotate(90deg); }
+
+.endpoint-body {
+  display: none;
+  border-top: 1px solid var(--border);
+  padding: 18px;
+  background: var(--bg-1);
+}
+.endpoint.open .endpoint-body { display: block; }
+
+.ep-info { margin-bottom: 14px; }
+.ep-info p { font-size: .85rem; color: var(--text-2); line-height: 1.6; }
+.ep-label {
+  font-family: var(--mono);
+  font-size: .65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--text-3);
+  margin-bottom: 6px;
+}
+
+.ep-warn {
+  background: var(--red-dim);
+  border: 1px solid rgba(239,68,68,.25);
+  border-radius: 4px;
+  padding: 10px 14px;
+  font-size: .8rem;
+  color: var(--red);
+  margin-bottom: 14px;
+  font-family: var(--mono);
+}
+.ep-warn::before { content: "WARNING: "; font-weight: 700; }
+
+/* Try it panel */
+.try-panel {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 14px;
+  margin-top: 12px;
+}
+.try-panel .try-row {
+  display: flex; gap: 8px; align-items: center;
+  margin-bottom: 10px;
+}
+.try-panel input {
+  flex: 1;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--text-0);
+  font-family: var(--mono);
+  font-size: .78rem;
+  padding: 7px 10px;
+  border-radius: 3px;
+  outline: none;
+}
+.try-panel input:focus { border-color: var(--accent); }
+.try-btn {
+  font-family: var(--mono);
+  font-size: .7rem;
+  font-weight: 600;
+  padding: 7px 14px;
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .15s;
+}
+.try-btn:hover { background: var(--accent); color: #fff; }
+.try-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+pre.response {
+  background: var(--bg-0);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 14px;
+  font-family: var(--mono);
+  font-size: .72rem;
+  line-height: 1.55;
+  color: var(--text-1);
+  overflow-x: auto;
+  max-height: 400px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+pre.response .key { color: var(--cyan); }
+pre.response .str { color: var(--green); }
+pre.response .num { color: var(--amber); }
+pre.response .bool { color: var(--purple); }
+pre.response .null { color: var(--text-3); }
+
+/* Param table */
+.param-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .8rem;
+  margin-top: 6px;
+}
+.param-table th {
+  font-family: var(--mono);
+  font-size: .65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text-3);
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.param-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-2);
+  vertical-align: top;
+}
+.param-table td:first-child {
+  font-family: var(--mono);
+  font-size: .78rem;
+  color: var(--cyan);
+  white-space: nowrap;
+}
+.param-table td code {
+  font-family: var(--mono);
+  font-size: .72rem;
+  background: var(--bg-3);
+  padding: 1px 5px;
+  border-radius: 2px;
+  color: var(--text-1);
+}
+
+/* Socket events table */
+.socket-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .8rem;
+}
+.socket-table th {
+  font-family: var(--mono);
+  font-size: .65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text-3);
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-2);
+}
+.socket-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-2);
+}
+.socket-table td:first-child {
+  font-family: var(--mono);
+  font-size: .78rem;
+  color: var(--accent);
+}
+.socket-table tr:hover td { background: var(--bg-2); }
+
+/* Data type chips */
+.dtype {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: .6rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 2px;
+  text-transform: uppercase;
+}
+.dtype.arr { background: var(--green-dim); color: var(--green); }
+.dtype.obj { background: var(--purple-dim); color: var(--purple); }
+.dtype.str { background: var(--amber-dim); color: var(--amber); }
+.dtype.bin { background: var(--red-dim); color: var(--red); }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .shell { grid-template-columns: 1fr; }
+  .sidebar {
+    position: fixed; top: 0; left: -280px;
+    width: 280px; height: 100vh;
+    transition: left .25s;
+    box-shadow: 4px 0 20px rgba(0,0,0,.5);
+  }
+  .sidebar.open { left: 0; }
+  .mobile-toggle {
+    display: flex !important;
+    position: fixed; top: 12px; left: 12px; z-index: 20;
+    width: 36px; height: 36px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    align-items: center; justify-content: center;
+    color: var(--text-1);
+    cursor: pointer;
+    font-size: 1.1rem;
+  }
+  .main-inner { padding: 56px 20px 80px; }
+  .conn-fields { grid-template-columns: 1fr; }
+}
+.mobile-toggle { display: none; }
+
+/* Remote banner */
+.remote-banner {
+  background: var(--amber-dim);
+  border: 1px solid rgba(245,158,11,.25);
+  border-radius: 6px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  font-size: .85rem;
+  color: var(--amber);
+  line-height: 1.6;
+  display: none;
+}
+.remote-banner strong { color: var(--text-0); }
+.remote-banner code {
+  font-family: var(--mono);
+  font-size: .78rem;
+  background: rgba(0,0,0,.3);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+body.is-remote .remote-banner { display: block; }
+body.is-remote .conn-panel { display: none; }
+body.is-remote .try-panel { display: none; }
+</style>
+</head>
+<body>
+<button class="mobile-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">|||</button>
+<div class="shell">
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo-label">Clear-Com</div>
+    <h1>FreeSpeak <span>II</span><br>API Reference</h1>
+    <div class="meta">
+      <span><span class="dot" id="statusDot"></span><span id="statusText">checking...</span></span>
+      <span>v1.6.15</span>
+    </div>
+  </div>
+  <div class="sidebar-search">
+    <input type="text" id="searchInput" placeholder="Filter endpoints..." oninput="filterEndpoints(this.value)">
+  </div>
+  <nav class="nav" id="sidebarNav"></nav>
+</aside>
+
+<!-- ── MAIN ── -->
+<main class="main">
+<div class="main-inner">
+
+  <div class="remote-banner">
+    <strong>Read-only mode</strong> — This page is loaded from the internet, so the live "Try It" feature
+    is unavailable. Browsers block requests from HTTPS pages to local HTTP devices.<br>
+    To use "Try It", download <code>index.html</code> and open it directly on a computer on the same network as your base station.
+  </div>
+
+  <div class="hero">
+    <h2>REST API Reference</h2>
+    <p>Complete documentation of the undocumented Clear-Com FreeSpeak II Base Station API.
+    The base station runs an Express.js server with a full REST API used by the CCM web interface,
+    plus Socket.IO for real-time updates. All endpoints use HTTP Digest authentication.</p>
+    <div class="badges">
+      <div class="badge">Auth <span class="val">HTTP Digest</span></div>
+      <div class="badge">Transport <span class="val">REST + Socket.IO</span></div>
+      <div class="badge">Format <span class="val">JSON</span></div>
+      <div class="badge">CORS <span class="val">Enabled</span></div>
+      <div class="badge">Codec <span class="val">Opus</span></div>
+      <div class="badge">Max Roles <span class="val">55</span></div>
+      <div class="badge">Partylines <span class="val">12</span></div>
+      <div class="badge">Groups <span class="val">12</span></div>
+    </div>
+  </div>
+
+  <!-- Connection config -->
+  <div class="conn-panel">
+    <h3>Connection</h3>
+    <div class="conn-fields">
+      <div class="conn-field">
+        <label>Base Station IP</label>
+        <input type="text" id="cfgHost" value="" placeholder="192.168.1.100">
+      </div>
+      <div class="conn-field">
+        <label>Username</label>
+        <input type="text" id="cfgUser" value="" placeholder="admin">
+      </div>
+      <div class="conn-field">
+        <label>Password</label>
+        <input type="password" id="cfgPass" value="" placeholder="password">
+      </div>
+      <button class="conn-btn" onclick="testConnection()">Test Connection</button>
+    </div>
+    <div class="conn-status" id="connStatus"></div>
+  </div>
+
+  <div id="endpointSections"></div>
+
+</div>
+</main>
+</div>
+
+<script>
+// ── API DEFINITION ──
+const API = [
+  {
+    id: "devices",
+    title: "Devices",
+    icon: "DEV",
+    iconBg: "var(--accent-dim)",
+    iconColor: "var(--accent)",
+    desc: "Base station device information, settings, and system actions. In a linked system, multiple devices appear here.",
+    endpoints: [
+      {
+        method: "GET", path: "/api/1/devices/", summary: "List all devices",
+        returns: "arr",
+        desc: "Returns an array of all base stations in the system. Each device includes full settings: network config, antenna port types, GPIO, display brightness, OTA/admin PINs, keyset config, linking status, firmware version, license info, and live status (power level, GPI states).",
+        tryable: true,
+        fields: [
+          ["{}.device_id", "number", "Unique device ID"],
+          ["{}.device_label", "string", "User-assigned label"],
+          ["{}.device_ipAddress", "string", "Device IP address"],
+          ["{}.deviceType_name", "string", "Device type (FSII)"],
+          ["{}.device_settings.antennaPorts", "object", "Antenna port types (rj45/fiber)"],
+          ["{}.device_settings.network", "object", "Network config (IP, mask, gateway, DNS, MAC)"],
+          ["{}.device_settings.otaPin", "string", "Over-the-air PIN"],
+          ["{}.device_settings.adminPin", "string", "Admin PIN"],
+          ["{}.device_settings.wirelessId", "string", "Wireless system ID"],
+          ["{}.versionSW", "string", "Firmware version"],
+          ["{}.versionHW", "string", "Hardware version"],
+          ["{}.licensedFeatures", "array", "Licensed feature list"],
+          ["{}.device_liveStatus.power", "number", "Power level (0-4)"],
+          ["{}.device_usage", "number", "Resource usage percentage"],
+        ]
+      },
+      {
+        method: "GET", path: "/api/2/devices/", summary: "List all devices (v2)",
+        returns: "obj",
+        desc: "Same as v1 — returns full device data. The v2 API is used for newer operations like network setup and config restore.",
+        tryable: true,
+      },
+      {
+        method: "PUT", path: "/api/1/devices/{deviceId}", summary: "Update device settings",
+        returns: "obj",
+        desc: "Update device settings such as label, display brightness, battery type, antenna port types, keysets, GPIO config. Send a JSON body with the fields to update.",
+        params: [["{deviceId}", "Device ID (typically 1)"]],
+      },
+      {
+        method: "GET", path: "/api/1/devices/{deviceId}/capability", summary: "Get device capabilities",
+        returns: "obj",
+        desc: "Returns what features the device supports: PSU monitoring, WebSocket, label length limits, endpoint support, save/restore, upgrade constraints (min/max firmware size, accepted extensions), DNS support, interface display config, and licensing availability.",
+        tryable: true, tryPath: "/api/1/devices/1/capability",
+      },
+      {
+        method: "GET", path: "/api/1/devices/{deviceId}/getDateTime", summary: "Get system date/time",
+        returns: "obj",
+        desc: "Returns the current date and time of the base station. Response includes ok, message, and wbsDateTime fields.",
+        tryable: true, tryPath: "/api/1/devices/1/getDateTime",
+      },
+      {
+        method: "GET", path: "/api/1/devices/{deviceId}/alerts/current", summary: "Get active alerts",
+        returns: "arr",
+        desc: "Returns array of current system alerts. Empty array when no active alerts.",
+        tryable: true, tryPath: "/api/1/devices/1/alerts/current",
+      },
+      {
+        method: "GET", path: "/api/1/devices/{deviceId}/snapshotinfo", summary: "Get snapshot progress",
+        returns: "obj",
+        desc: "Returns the progress percentage of a support snapshot being created. Returns {percentComplete: 0} when idle.",
+        tryable: true, tryPath: "/api/1/devices/1/snapshotinfo",
+      },
+      {
+        method: "GET", path: "/api/1/devices/{deviceId}/upgrade", summary: "Get firmware upgrade status",
+        returns: "obj",
+        desc: "Returns the current firmware upgrade progress: percentComplete, stage (Idle when not upgrading), and ok status.",
+        tryable: true, tryPath: "/api/1/devices/1/upgrade",
+      },
+      {
+        method: "GET", path: "/api/1/devices/{deviceId}/networkEvent/", summary: "Get network events",
+        returns: "obj",
+        desc: "Returns network event configuration. Response: {ok: true, message: 'Success'}.",
+        tryable: true, tryPath: "/api/1/devices/1/networkEvent/",
+      },
+      {
+        method: "GET", path: "/api/1/devices/{deviceId}/backup", summary: "Download config backup",
+        returns: "bin",
+        desc: "Downloads the device configuration as a binary backup file. Use Accept: application/octet-stream header. The filename is in the Content-Disposition response header.",
+      },
+      {
+        method: "POST", path: "/api/1/devices/{deviceId}/reboot", summary: "Reboot device",
+        returns: "obj",
+        desc: "Reboots the base station. The device will go offline briefly and return.",
+        warn: "This will take the system offline temporarily. All active communications will be interrupted.",
+      },
+      {
+        method: "POST", path: "/api/1/devices/{deviceId}/restartServices", summary: "Restart services",
+        returns: "obj",
+        desc: "Restarts the internal services without a full reboot.",
+      },
+      {
+        method: "POST", path: "/api/1/devices/{deviceId}/resettodefault", summary: "Factory reset",
+        returns: "obj",
+        desc: "Initiates a complete factory reset. All roles, connections, settings, and beltpack registrations are wiped.",
+        warn: "DESTRUCTIVE — Wipes ALL configuration. The device will go offline for several minutes and may change IP address.",
+      },
+      {
+        method: "POST", path: "/api/1/devices/{deviceId}/setDateTime", summary: "Set date/time",
+        returns: "obj",
+        desc: "Sets the system date and time.",
+      },
+      {
+        method: "POST", path: "/api/1/devices/{deviceId}/setNetMode", summary: "Set network mode",
+        returns: "obj",
+        desc: "Sets the network mode (WAN or LAN).",
+      },
+      {
+        method: "POST", path: "/api/1/devices/{deviceId}/startOTA", summary: "Start OTA beltpack update",
+        returns: "obj",
+        desc: "Starts over-the-air firmware update for connected beltpacks.",
+      },
+      {
+        method: "POST", path: "/api/1/devices/{deviceId}/snapshot", summary: "Create support snapshot",
+        returns: "obj",
+        desc: "Creates a diagnostic support bundle. Check progress with GET snapshotinfo.",
+      },
+      {
+        method: "POST", path: "/api/1/devices/{deviceId}/updatelinkingconfig", summary: "Update linking config",
+        returns: "obj",
+        desc: "Updates the multi-base linking configuration.",
+      },
+      {
+        method: "POST", path: "/api/2/devices/{deviceId}/setupnetwork", summary: "Configure network (v2)",
+        returns: "obj",
+        desc: "Configure network settings (static IP, DHCP, etc). Uses the v2 API.",
+        warn: "Changing network settings may make the device unreachable at its current IP.",
+      },
+      {
+        method: "POST", path: "/api/2/devices/restore", summary: "Restore config backup",
+        returns: "obj",
+        desc: "Upload a configuration backup file to restore. Uses multipart/form-data file upload.",
+      },
+      {
+        method: "POST", path: "/api/1/devices/0/upload", summary: "Upload firmware",
+        returns: "obj",
+        desc: "Upload a firmware file for upgrade. Multipart/form-data. Accepted extensions: .gz, .fww, .FWW. Size: 100KB-100MB.",
+      },
+    ]
+  },
+  {
+    id: "endpoints",
+    title: "Endpoints (Antennas & Beltpacks)",
+    icon: "ANT",
+    iconBg: "var(--green-dim)",
+    iconColor: "var(--green)",
+    desc: "Wireless endpoints include FSII-Antenna transceivers and FSII-BP beltpacks. Each antenna reports online/offline status, sync state, and firmware. Each beltpack reports battery, RSSI, link quality, key states, assigned role, and which antenna it's connected to.",
+    endpoints: [
+      {
+        method: "GET", path: "/api/1/devices/{deviceId}/endpoints/", summary: "List all endpoints",
+        returns: "arr",
+        desc: "Returns all antennas and beltpacks. Antennas have IDs starting at 1000000. Beltpacks have lower numeric IDs. Each includes type, label, liveStatus, settings, firmware version, and update status.",
+        tryable: true, tryPath: "/api/1/devices/1/endpoints/",
+        fields: [
+          ["{}.type", "string", "'FSII-Antenna' or 'FSII-BP'"],
+          ["{}.label", "string", "User-assigned label"],
+          ["{}.liveStatus.status", "string", "'online', 'offline', or 'unknown'"],
+          ["{}.liveStatus.frequencyType", "string", "Frequency band (e.g. '1.9')"],
+          ["{}.liveStatus.syncState", "string", "Sync state (antennas only: 'base')"],
+          ["{}.liveStatus.batteryLevel", "number", "Battery percentage (beltpacks)"],
+          ["{}.liveStatus.batteryType", "string", "'Li-Ion' or 'NiMH'"],
+          ["{}.liveStatus.RSSI", "number", "Signal strength (beltpacks)"],
+          ["{}.liveStatus.linkQuality", "number", "Link quality 0-100 (beltpacks)"],
+          ["{}.liveStatus.frameErrorRate", "number", "Frame error rate (beltpacks)"],
+          ["{}.liveStatus.longevity", "object", "{hours, minutes} remaining (beltpacks)"],
+          ["{}.liveStatus.antennaIndex", "number", "Connected antenna index (beltpacks)"],
+          ["{}.liveStatus.antennaSlot", "number", "Antenna slot number (beltpacks)"],
+          ["{}.liveStatus.keyState[]", "array", "Key states: keysetIndex, currentState, volume"],
+          ["{}.role", "object", "Assigned role {id, label, res} (beltpacks)"],
+          ["{}.settings.syncOffset", "number", "Sync offset (antennas)"],
+          ["{}.settings.default_role", "number", "Default role ID (beltpacks)"],
+          ["{}.versionSW", "string", "Firmware version"],
+          ["{}.callState", "boolean", "Active call state (beltpacks)"],
+        ]
+      },
+      {
+        method: "GET", path: "/api/1/devices/{deviceId}/endpoints/{endpointId}", summary: "Get single endpoint",
+        returns: "obj",
+        desc: "Returns a single antenna or beltpack by ID.",
+        tryable: true, tryPath: "/api/1/devices/1/endpoints/1000000",
+      },
+      {
+        method: "PUT", path: "/api/1/devices/{deviceId}/endpoints/{endpointId}", summary: "Update endpoint",
+        returns: "obj",
+        desc: "Update endpoint settings such as label, default role, or sync offset.",
+        params: [["{endpointId}", "Endpoint ID (1000000+ for antennas)"]],
+      },
+      {
+        method: "DELETE", path: "/api/1/devices/{deviceId}/endpoints/{endpointId}", summary: "Delete endpoint",
+        returns: "obj",
+        desc: "Remove an endpoint (unregister a beltpack).",
+        warn: "Removes the beltpack registration. It will need to be re-registered.",
+      },
+      {
+        method: "POST", path: "/api/1/devices/{deviceId}/endpoints/{endpointId}/reboot", summary: "Reboot endpoint",
+        returns: "obj",
+        desc: "Remotely reboot a beltpack.",
+      },
+      {
+        method: "POST", path: "/api/1/devices/{deviceId}/endpoints/{endpointId}/rmk", summary: "Remote Mic Kill",
+        returns: "obj",
+        desc: "Remote Mic Kill — forces a beltpack's microphone off.",
+      },
+      {
+        method: "POST", path: "/api/1/devices/{deviceId}/endpoints/{endpointId}/call", summary: "Call signaling",
+        returns: "obj",
+        desc: "Send call signaling to an endpoint.",
+      },
+      {
+        method: "POST", path: "/api/1/devices/{deviceId}/endpoints/{endpointId}/resettodefault", summary: "Reset endpoint",
+        returns: "obj",
+        desc: "Reset an endpoint's settings to defaults.",
+      },
+    ]
+  },
+  {
+    id: "connections",
+    title: "Connections (Partylines & Groups)",
+    icon: "CON",
+    iconBg: "var(--amber-dim)",
+    iconColor: "var(--amber)",
+    desc: "Connections are the communication channels. Partylines (up to 12) are always-on shared channels. Groups (up to 12) are logical groupings of channels. The liveStatus endpoint shows real-time talk/listen state of all participants.",
+    endpoints: [
+      {
+        method: "GET", path: "/api/1/connections/", summary: "List all connections",
+        returns: "arr",
+        desc: "Returns all partylines and groups with their ID, label, type, and resource path.",
+        tryable: true,
+        fields: [
+          ["{}.id", "number", "Connection ID (1-12 partylines, 13-24 groups)"],
+          ["{}.label", "string", "Channel label"],
+          ["{}.type", "string", "'partyline' or 'group'"],
+          ["{}.res", "string", "Resource path"],
+        ]
+      },
+      {
+        method: "GET", path: "/api/1/connections/{connectionId}", summary: "Get single connection",
+        returns: "obj",
+        desc: "Returns a single connection by ID.",
+        tryable: true, tryPath: "/api/1/connections/1",
+      },
+      {
+        method: "GET", path: "/api/1/connections/liveStatus", summary: "Live connection status",
+        returns: "arr",
+        desc: "Returns ALL connections with their current participants, talk/listen states, and event flags (call, talk, control). This is the key endpoint for monitoring who is talking on which channel in real time.",
+        tryable: true,
+        fields: [
+          ["{}.participants[]", "array", "Active participants on this connection"],
+          ["{}.participants[].joinState", "string", "'Talk-Listen', 'Listen', 'Talk'"],
+          ["{}.participants[].label", "string", "Port/device label"],
+          ["{}.participants[].state", "string", "'connected'"],
+          ["{}.participants[].type", "string", "'SA', '2W', '4W', 'HS'"],
+          ["{}.events.talk", "boolean", "Someone is actively talking"],
+          ["{}.events.call", "boolean", "Active call signal"],
+        ]
+      },
+      {
+        method: "PUT", path: "/api/1/connections/{connectionId}", summary: "Update connection",
+        returns: "obj",
+        desc: "Update a connection's label. Body must include {\"label\": \"new name\"}.",
+      },
+      {
+        method: "POST", path: "/api/1/connections/", summary: "Create connection",
+        returns: "obj",
+        desc: "Create a new partyline or group. Subject to the max of 12 each.",
+      },
+      {
+        method: "DELETE", path: "/api/1/connections/{connectionId}", summary: "Delete connection",
+        returns: "obj",
+        desc: "Delete a connection. All ports must be removed first.",
+        warn: "Remove all port associations before deleting.",
+      },
+    ]
+  },
+  {
+    id: "roles",
+    title: "Roles",
+    icon: "ROL",
+    iconBg: "var(--purple-dim)",
+    iconColor: "var(--purple)",
+    desc: "Roles define beltpack configurations — which channels appear on which keys, talk/listen modes, audio settings, and alert preferences. Up to 55 roles supported. Each beltpack is assigned a role.",
+    endpoints: [
+      {
+        method: "GET", path: "/api/1/roles/", summary: "List all roles",
+        returns: "arr",
+        desc: "Returns all roles with full keyset configuration, audio settings, and alert preferences.",
+        tryable: true,
+        fields: [
+          ["{}.id", "number", "Role ID"],
+          ["{}.label", "string", "Role name"],
+          ["{}.type", "string", "'FSII-BP'"],
+          ["{}.isDefault", "boolean", "Whether this is the default role"],
+          ["{}.settings.keysets[]", "array", "Key assignments (connection, activation state, mode)"],
+          ["{}.settings.keysets[].activationState", "string", "talk, listen, talklisten, talkforcelisten, etc."],
+          ["{}.settings.keysets[].talkBtnMode", "string", "latching, non-latching, disabled"],
+          ["{}.settings.headphoneLimit", "number", "Headphone limiter level"],
+          ["{}.settings.sidetoneGain", "number", "Sidetone gain in dB"],
+          ["{}.settings.masterVolume", "number", "Master volume"],
+          ["{}.settings.micEchoCancellation", "boolean", "Echo cancellation enabled"],
+          ["{}.settings.batteryAlarmMode", "string", "vibrate+audio, vibrate, audio, off"],
+          ["{}.settings.lowBatteryThreshold", "number", "Low battery warning percentage"],
+          ["{}.settings.outOfRangeAlarm", "string", "Out of range alarm mode"],
+        ]
+      },
+      {
+        method: "GET", path: "/api/1/roles/{roleId}", summary: "Get single role",
+        returns: "obj",
+        desc: "Returns a single role with full configuration.",
+        tryable: true, tryPath: "/api/1/roles/6",
+      },
+      {
+        method: "POST", path: "/api/1/roles/", summary: "Create role",
+        returns: "obj",
+        desc: "Create a new role with keyset configuration.",
+      },
+      {
+        method: "PUT", path: "/api/1/roles/{roleId}", summary: "Update role",
+        returns: "obj",
+        desc: "Update a role's settings — keysets, audio, alerts, etc.",
+      },
+      {
+        method: "DELETE", path: "/api/1/roles/{roleId}", summary: "Delete role",
+        returns: "obj",
+        desc: "Delete a role. Beltpacks assigned to it will need reassignment.",
+      },
+    ]
+  },
+  {
+    id: "interfaces",
+    title: "Audio Interfaces",
+    icon: "AIF",
+    iconBg: "var(--cyan); opacity:.15",
+    iconColor: "var(--cyan)",
+    desc: "The base station has 5 audio interfaces: 1 Station (E1), 2 Two-Wire (2W), and 2 Four-Wire (4W). Each interface has configurable ports for connecting external equipment.",
+    endpoints: [
+      {
+        method: "GET", path: "/api/1/devices/{deviceId}/interfaces/", summary: "List all interfaces",
+        returns: "arr",
+        desc: "Returns all 5 audio interfaces with their type, port count, settings, and live status. Note: Each interface has both an audioInterface_id (256-260) and an hwIndex (0-4). Port access uses hwIndex.",
+        tryable: true, tryPath: "/api/1/devices/1/interfaces/",
+        fields: [
+          ["{}.audioInterface_id", "number", "Interface ID (256-260) — used in resource paths"],
+          ["{}.audioInterface_hwIndex", "number", "Hardware index (0-4) — used for port access"],
+          ["{}.audioInterfaceType", "string", "FSII-E1, FSII-2W, or FSII-4W"],
+          ["{}.audioInterfaceType_shortName", "string", "E1, 2W, or 4W"],
+          ["{}.audioInterface_portCount", "number", "Number of ports"],
+          ["{}.audioInterface_settings", "object", "Settings (mode, power for 2W)"],
+          ["{}.audioInterface_liveStatus", "object", "Live status including port states"],
+        ]
+      },
+      {
+        method: "GET", path: "/api/1/devices/{deviceId}/interfaces/{interfaceId}", summary: "Get single interface",
+        returns: "obj",
+        desc: "Returns a single interface by audioInterface_id.",
+        tryable: true, tryPath: "/api/1/devices/1/interfaces/256",
+      },
+      {
+        method: "PUT", path: "/api/1/devices/{deviceId}/interfaces/{interfaceId}", summary: "Update interface",
+        returns: "obj",
+        desc: "Update interface settings (e.g. 2-wire mode: ClearCom/RTS, power on/off).",
+      },
+    ]
+  },
+  {
+    id: "ports",
+    title: "Ports",
+    icon: "PRT",
+    iconBg: "rgba(255,255,255,.06)",
+    iconColor: "var(--text-1)",
+    desc: "Ports are the individual channels on each audio interface. Each port has configurable gain, termination, and connection assignments. IMPORTANT: Port listing uses hwIndex (0-4), not interface ID (256-260).",
+    endpoints: [
+      {
+        method: "GET", path: "/api/1/devices/{deviceId}/interfaces/{hwIndex}/ports/", summary: "List ports for interface",
+        returns: "arr",
+        desc: "Returns all ports for an interface. CRITICAL: Use the hwIndex (0-4) here, NOT the audioInterface_id (256-260)! hwIndex 0=Station(E1), 1=2W-A, 2=2W-B, 3=4W-A, 4=4W-B.",
+        tryable: true, tryPath: "/api/1/devices/1/interfaces/0/ports/",
+        fields: [
+          ["{}.port_id", "number", "Global port ID"],
+          ["{}.port_label", "string", "Port label"],
+          ["{}.port_config_type", "string", "PGM, SA, HS, 2W, 4W"],
+          ["{}.port_connections", "object", "Connected channel IDs with state"],
+          ["{}.port_settings", "object", "inputGain, outputGain, termination, callSignal, etc."],
+          ["{}.liveStatus.vox.status", "boolean", "Voice activity detected"],
+          ["{}.liveStatus.online", "boolean", "Port is online"],
+        ]
+      },
+      {
+        method: "PUT", path: "/api/1/devices/{deviceId}/interfaces/{interfaceId}/ports/{portId}", summary: "Update port",
+        returns: "obj",
+        desc: "Update port settings — gain levels, termination, call signal, serial settings (4W).",
+      },
+      {
+        method: "POST", path: "/api/1/devices/{deviceId}/interfaces/{interfaceId}/ports/{portId}/join", summary: "Join connection",
+        returns: "obj",
+        desc: "Associate a port with a connection. Body: {\"target\": \"/api/1/connections/{id}\"}.",
+      },
+      {
+        method: "POST", path: "/api/1/devices/{deviceId}/interfaces/{interfaceId}/ports/{portId}/leave", summary: "Leave connection",
+        returns: "obj",
+        desc: "Remove a port from a connection. Body: {\"target\": \"/api/1/connections/{id}\"}.",
+      },
+      {
+        method: "GET", path: "/api/1/devices/{deviceId}/interfaces/{interfaceId}/ports/{portId}/nulling", summary: "Get nulling status",
+        returns: "obj",
+        desc: "Returns the line nulling status for a port. Response: {ok: true, nulling: 'Idle'}.",
+        tryable: true, tryPath: "/api/1/devices/1/interfaces/258/ports/66048/nulling",
+      },
+      {
+        method: "POST", path: "/api/1/devices/{deviceId}/interfaces/{interfaceId}/ports/{portId}/nulling", summary: "Start line nulling",
+        returns: "obj",
+        desc: "Initiate line nulling on a 2-wire port.",
+      },
+      {
+        method: "POST", path: "/api/1/devices/{deviceId}/interfaces/{interfaceId}/ports/{portId}/gpo", summary: "Set port GPO",
+        returns: "obj",
+        desc: "Set GPO state on a port. Body: {\"enabled\": true/false, \"timeout\": 4000}.",
+      },
+      {
+        method: "GET", path: "/api/1/devices/{deviceId}/interfaces/{interfaceId}/ports/{portId}/calls/", summary: "List active calls",
+        returns: "arr",
+        desc: "Returns active SIP calls on a port. Empty array when no calls.",
+      },
+      {
+        method: "POST", path: "/api/1/devices/{deviceId}/interfaces/{interfaceId}/ports/{portId}/calls/", summary: "Make SIP call",
+        returns: "obj",
+        desc: "Initiate a SIP call. Body: {\"uri\": \"sip:...\"}.",
+      },
+      {
+        method: "DELETE", path: "/api/1/devices/{deviceId}/interfaces/{ifId}/ports/{portId}/calls/{callId}", summary: "Hang up call",
+        returns: "obj",
+        desc: "Terminate a specific SIP call.",
+      },
+    ]
+  },
+  {
+    id: "gpio",
+    title: "GPIO (GPI / GPO)",
+    icon: "GPI",
+    iconBg: "var(--amber-dim)",
+    iconColor: "var(--amber)",
+    desc: "General Purpose Inputs (2) and Outputs (4). GPIs can trigger actions, GPOs can be driven by events. The combined GPIO endpoint returns both types.",
+    endpoints: [
+      {
+        method: "GET", path: "/api/1/devices/0/gpio", summary: "List all GPI/GPO",
+        returns: "arr",
+        desc: "Returns all GPI and GPO entries. type=0 is GPI, type=1 is GPO. Each includes label, live status (state, forced), and event configuration.",
+        tryable: true,
+        fields: [
+          ["{}.id", "number", "GPIO ID"],
+          ["{}.label", "string", "Label (GPI1, GPO1, etc.)"],
+          ["{}.type", "number", "0=GPI, 1=GPO"],
+          ["{}.liveStatus.status", "boolean", "Current state"],
+          ["{}.liveStatus.forced", "boolean", "Whether state is forced"],
+          ["{}.settings.events[]", "array", "Configured event triggers"],
+        ]
+      },
+      {
+        method: "PUT", path: "/api/1/devices/{deviceId}/gpi/{gpiId}", summary: "Update GPI",
+        returns: "obj", desc: "Update GPI settings.",
+      },
+      {
+        method: "POST", path: "/api/1/devices/{deviceId}/gpi/{gpiId}/addEvent", summary: "Add GPI event",
+        returns: "obj", desc: "Add an event trigger to a GPI.",
+      },
+      {
+        method: "PUT", path: "/api/1/devices/{deviceId}/gpi/{gpiId}/events/{eventId}", summary: "Update GPI event",
+        returns: "obj", desc: "Update a GPI event configuration.",
+      },
+      {
+        method: "DELETE", path: "/api/1/devices/{deviceId}/gpi/{gpiId}/events/{eventId}", summary: "Delete GPI event",
+        returns: "obj", desc: "Remove a GPI event.",
+      },
+      {
+        method: "PUT", path: "/api/1/devices/{deviceId}/gpo/{gpoId}", summary: "Update GPO",
+        returns: "obj", desc: "Update GPO settings.",
+      },
+      {
+        method: "POST", path: "/api/1/devices/{deviceId}/gpo/{gpoId}/addEvent", summary: "Add GPO event",
+        returns: "obj", desc: "Add an event trigger to a GPO.",
+      },
+      {
+        method: "PUT", path: "/api/1/devices/{deviceId}/gpo/{gpoId}/events/{eventId}", summary: "Update GPO event",
+        returns: "obj", desc: "Update a GPO event configuration.",
+      },
+      {
+        method: "DELETE", path: "/api/1/devices/{deviceId}/gpo/{gpoId}/events/{eventId}", summary: "Delete GPO event",
+        returns: "obj", desc: "Remove a GPO event.",
+      },
+    ]
+  },
+  {
+    id: "external",
+    title: "External Devices (SIP / IVC-32)",
+    icon: "SIP",
+    iconBg: "rgba(255,255,255,.06)",
+    iconColor: "var(--text-1)",
+    desc: "Manage SIP trunks and IVC-32 connections for interoperability with other systems.",
+    endpoints: [
+      {
+        method: "GET", path: "/api/1/externalDevices/", summary: "List external devices",
+        returns: "arr",
+        desc: "Returns all configured SIP trunks and IVC-32 connections. Empty when none configured.",
+        tryable: true,
+      },
+      {
+        method: "POST", path: "/api/1/externalDevices/", summary: "Add external device",
+        returns: "obj", desc: "Register a new SIP trunk or IVC-32 connection.",
+      },
+      {
+        method: "GET", path: "/api/1/externalDevices/{id}", summary: "Get external device",
+        returns: "obj", desc: "Get a specific external device by ID.",
+      },
+      {
+        method: "PUT", path: "/api/1/externalDevices/{id}", summary: "Update external device",
+        returns: "obj", desc: "Update an external device's settings.",
+      },
+      {
+        method: "DELETE", path: "/api/1/externalDevices/{id}", summary: "Delete external device",
+        returns: "obj", desc: "Remove an external device.",
+      },
+      {
+        method: "POST", path: "/api/1/externalDevices/{id}/ports/{portId}", summary: "Add external port",
+        returns: "obj", desc: "Add a port to an external device.",
+      },
+      {
+        method: "PUT", path: "/api/1/externalDevices/{id}/ports/{portId}", summary: "Update external port",
+        returns: "obj", desc: "Update external port settings.",
+      },
+      {
+        method: "DELETE", path: "/api/1/externalDevices/{id}/ports/{portId}", summary: "Delete external port",
+        returns: "obj", desc: "Remove a port from an external device.",
+      },
+    ]
+  },
+  {
+    id: "ivp",
+    title: "IVP Users",
+    icon: "IVP",
+    iconBg: "rgba(255,255,255,.06)",
+    iconColor: "var(--text-1)",
+    desc: "Intercom Voice Panel users — software-based intercom clients.",
+    endpoints: [
+      {
+        method: "GET", path: "/api/1/ivpusers/", summary: "List IVP users",
+        returns: "arr",
+        desc: "Returns all IVP users. Empty when none configured.",
+        tryable: true,
+      },
+      { method: "POST", path: "/api/1/ivpusers/", summary: "Create IVP user", returns: "obj", desc: "Create a new IVP user." },
+      { method: "GET", path: "/api/1/ivpusers/{userId}", summary: "Get IVP user", returns: "obj", desc: "Get a specific IVP user." },
+      { method: "PUT", path: "/api/1/ivpusers/{userId}", summary: "Update IVP user", returns: "obj", desc: "Update an IVP user." },
+      { method: "DELETE", path: "/api/1/ivpusers/{userId}", summary: "Delete IVP user", returns: "obj", desc: "Remove an IVP user." },
+    ]
+  },
+  {
+    id: "users",
+    title: "Users & Auth",
+    icon: "USR",
+    iconBg: "rgba(255,255,255,.06)",
+    iconColor: "var(--text-1)",
+    desc: "System user management and authentication.",
+    endpoints: [
+      {
+        method: "GET", path: "/api/1/users/", summary: "List system users",
+        returns: "arr",
+        desc: "Returns all system users. Typically just 'admin'.",
+        tryable: true,
+      },
+      {
+        method: "GET", path: "/api/1/users/{username}", summary: "Get user",
+        returns: "obj",
+        desc: "Get a specific user by username.",
+        tryable: true, tryPath: "/api/1/users/admin",
+      },
+      {
+        method: "PUT", path: "/api/1/users/{username}", summary: "Update user/password",
+        returns: "obj",
+        desc: "Update user settings, including password change.",
+      },
+    ]
+  },
+  {
+    id: "capabilities",
+    title: "Capabilities",
+    icon: "CAP",
+    iconBg: "rgba(255,255,255,.06)",
+    iconColor: "var(--text-1)",
+    desc: "Query the system for supported features, limits, and interface capabilities.",
+    endpoints: [
+      {
+        method: "GET", path: "/api/1/capabilities/linkgroup", summary: "Link group capabilities",
+        returns: "obj",
+        desc: "Returns system-wide capabilities: max roles (55), codec (Opus), connection limits (12 partylines, 12 groups), label lengths, and supported role types.",
+        tryable: true,
+      },
+      {
+        method: "GET", path: "/api/1/capabilities/interfaces/{type}", summary: "Interface capabilities",
+        returns: "obj",
+        desc: "Returns capabilities for a specific interface type. Supported types: FSII-2W (has FEC, power, mode, termination, callSignal), FSII-4W (has portFunction, callSignal). FSII-E1 returns an error.",
+        tryable: true, tryPath: "/api/1/capabilities/interfaces/FSII-2W",
+      },
+      {
+        method: "GET", path: "/api/1/capabilities/devices/{type}", summary: "Device type capabilities",
+        returns: "obj",
+        desc: "Returns capabilities for a device type (use FSII).",
+        tryable: true, tryPath: "/api/1/capabilities/devices/FSII",
+      },
+    ]
+  },
+  {
+    id: "events",
+    title: "Events / Logging",
+    icon: "LOG",
+    iconBg: "rgba(255,255,255,.06)",
+    iconColor: "var(--text-1)",
+    desc: "Event log access and export.",
+    endpoints: [
+      {
+        method: "GET", path: "/api/1/events/{entityId}", summary: "Get event log",
+        returns: "obj",
+        desc: "Returns paginated event log for a device. Response includes desiredEvents array, totalNumberOfEvents, and totalNumberOfPages.",
+        tryable: true, tryPath: "/api/1/events/1",
+      },
+      {
+        method: "GET", path: "/api/1/events/export/{entityId}", summary: "Export event log",
+        returns: "obj",
+        desc: "Export all events for a device, including timestamp.",
+        tryable: true, tryPath: "/api/1/events/export/1",
+      },
+      {
+        method: "PUT", path: "/api/1/devices/{deviceId}/networkEvent/{networkEventId}", summary: "Update network event",
+        returns: "obj", desc: "Update a network event configuration.",
+      },
+    ]
+  },
+  {
+    id: "licensing",
+    title: "Licensing",
+    icon: "LIC",
+    iconBg: "rgba(255,255,255,.06)",
+    iconColor: "var(--text-1)",
+    desc: "WIBU-SYSTEMS CodeMeter license management. Current license: 25 Beltpacks.",
+    endpoints: [
+      {
+        method: "GET", path: "/api/1/devices/{deviceId}/license/context", summary: "Download license request",
+        returns: "bin",
+        desc: "Downloads a WIBU CodeMeterAct License Request File for offline activation.",
+        tryable: true, tryPath: "/api/1/devices/1/license/context",
+      },
+      {
+        method: "POST", path: "/api/1/devices/{deviceId}/license/upload", summary: "Upload license file",
+        returns: "obj", desc: "Upload a license activation file (multipart/form-data).",
+      },
+      {
+        method: "GET", path: "/api/1/devices/{deviceId}/license/ticket/{ticketId}", summary: "Get license ticket",
+        returns: "obj", desc: "Get ticket information for license activation.",
+      },
+      {
+        method: "POST", path: "/api/1/devices/{deviceId}/updateLicensePasscode", summary: "Update license passcode",
+        returns: "obj", desc: "Update the license passcode.",
+      },
+      {
+        method: "POST", path: "/api/1/devices/{deviceId}/wibuUpdate", summary: "WIBU license update",
+        returns: "obj", desc: "Trigger WIBU license update.",
+      },
+    ]
+  },
+  {
+    id: "socketio",
+    title: "Socket.IO Real-Time",
+    icon: "WS",
+    iconBg: "var(--green-dim)",
+    iconColor: "var(--green)",
+    desc: "Real-time event streaming via Socket.IO. Connect to the base station's Socket.IO endpoint to receive live updates for endpoints, connections, GPIO, and more. The client subscribes to topics via 'live:update' emit events.",
+    endpoints: [
+      {
+        method: "GET", path: "/socket.io/?EIO=3&transport=polling", summary: "Socket.IO handshake",
+        returns: "obj",
+        desc: "Socket.IO initial handshake endpoint. Returns session ID, supported upgrades (websocket), ping interval (25s), and ping timeout (60s). After handshake, upgrade to WebSocket for real-time streaming.",
+        tryable: true, tryPath: "/socket.io/?EIO=3&transport=polling",
+      },
+    ]
+  },
+];
+
+// Socket.IO events reference (separate from REST)
+const SOCKET_EVENTS = {
+  emit: [
+    ["connect", "Connection established"],
+    ["disconnect", "Disconnection"],
+    ["EndpointInit", "Request endpoint initialization data"],
+    ["GpiInit", "Request GPI initialization data"],
+    ["GpoInit", "Request GPO initialization data"],
+    ["live:update", "Subscribe/unsubscribe to live topics — {topic: 'start'} or {topic: 'stop'}"],
+  ],
+  on: [
+    ["EndpointInit", "Endpoint initialization response"],
+    ["EndpointAdded", "New beltpack/antenna registered"],
+    ["EndpointRemoved", "Endpoint removed"],
+    ["EndpointUpdated", "Endpoint state changed (battery, RSSI, status)"],
+    ["GpiInit", "GPI initialization response"],
+    ["GpiUpdated", "GPI state changed"],
+    ["GpiEventAdded", "GPI event trigger added"],
+    ["GpiEventRemoved", "GPI event trigger removed"],
+    ["GpiEventUpdated", "GPI event trigger updated"],
+    ["GpoInit", "GPO initialization response"],
+    ["GpoUpdated", "GPO state changed"],
+    ["GpoEventAdded", "GPO event trigger added"],
+    ["GpoEventRemoved", "GPO event trigger removed"],
+    ["GpoEventUpdated", "GPO event trigger updated"],
+  ],
+  topics: [
+    ["live:alerts", "Alert notifications"],
+    ["live:calls", "Call state changes"],
+    ["live:connections", "Connection/partyline updates"],
+    ["live:devices", "Device status updates"],
+    ["live:endpoints", "Beltpack/antenna status (battery, RSSI, online/offline)"],
+    ["live:eventLog", "Event log entries"],
+    ["live:externalDevices", "External device updates"],
+    ["live:gpios", "GPIO state changes"],
+    ["live:interfaces", "Audio interface updates"],
+    ["live:ivpusers", "IVP user updates"],
+    ["live:linkgroupcapabilities", "Link group capability changes"],
+    ["live:ports", "Port status updates"],
+    ["live:roles", "Role configuration changes"],
+    ["live:statistics", "Statistics/metrics"],
+    ["live:vpl", "Virtual Party Line updates"],
+  ]
+};
+
+// ── RENDER ──
+function buildSidebar() {
+  const nav = document.getElementById('sidebarNav');
+  let html = '';
+  API.forEach(section => {
+    html += `<div class="nav-group" data-section="${section.id}">`;
+    html += `<div class="nav-group-label">${section.title}</div>`;
+    section.endpoints.forEach((ep, i) => {
+      const dotColor = {GET:'var(--green)',POST:'var(--amber)',PUT:'var(--purple)',DELETE:'var(--red)'}[ep.method];
+      html += `<a class="nav-item" data-target="${section.id}-${i}" onclick="scrollToEndpoint('${section.id}-${i}')">
+        <span class="method-dot" style="background:${dotColor}"></span>
+        <span>${ep.method} ${ep.path.replace(/\/api\/[12]\//,'').replace(/\{[^}]+\}/g,':').replace(/\/$/, '')}</span>
+      </a>`;
+    });
+    html += '</div>';
+  });
+  nav.innerHTML = html;
+}
+
+function buildSections() {
+  const container = document.getElementById('endpointSections');
+  let html = '';
+
+  API.forEach(section => {
+    html += `<div class="section" id="section-${section.id}">`;
+    html += `<div class="section-head">
+      <div class="section-icon" style="background:${section.iconBg};color:${section.iconColor}">${section.icon}</div>
+      <h3>${section.title}</h3>
+      <span class="count">${section.endpoints.length} endpoint${section.endpoints.length>1?'s':''}</span>
+    </div>`;
+    if (section.desc) html += `<p class="section-desc">${section.desc}</p>`;
+
+    section.endpoints.forEach((ep, i) => {
+      const id = `${section.id}-${i}`;
+      const pathHtml = ep.path.replace(/\{([^}]+)\}/g, '<span class="param">{$1}</span>');
+
+      html += `<div class="endpoint" id="ep-${id}" data-search="${ep.method} ${ep.path} ${ep.summary}">`;
+      html += `<div class="endpoint-header" onclick="toggleEndpoint('${id}')">
+        <span class="method ${ep.method.toLowerCase()}">${ep.method}</span>
+        <span class="endpoint-path">${pathHtml}</span>
+        <span class="endpoint-summary">${ep.summary}</span>
+        <span class="endpoint-chevron">&gt;</span>
+      </div>`;
+
+      html += `<div class="endpoint-body">`;
+      if (ep.warn) html += `<div class="ep-warn">${ep.warn}</div>`;
+
+      html += `<div class="ep-info"><p>${ep.desc}</p></div>`;
+
+      if (ep.returns) {
+        const labels = {arr:'Array',obj:'Object',str:'String',bin:'Binary'};
+        html += `<p style="margin-bottom:12px"><span class="ep-label" style="display:inline;margin-right:6px">Returns</span> <span class="dtype ${ep.returns}">${labels[ep.returns]}</span></p>`;
+      }
+
+      if (ep.params) {
+        html += `<div class="ep-label">URL Parameters</div>`;
+        html += `<table class="param-table"><tr><th>Parameter</th><th>Description</th></tr>`;
+        ep.params.forEach(p => html += `<tr><td>${p[0]}</td><td>${p[1]}</td></tr>`);
+        html += `</table>`;
+      }
+
+      if (ep.fields) {
+        html += `<div class="ep-label" style="margin-top:14px">Response Fields</div>`;
+        html += `<table class="param-table"><tr><th>Field</th><th>Type</th><th>Description</th></tr>`;
+        ep.fields.forEach(f => html += `<tr><td>${f[0]}</td><td><code>${f[1]}</code></td><td>${f[2]}</td></tr>`);
+        html += `</table>`;
+      }
+
+      if (ep.tryable) {
+        const tryPath = ep.tryPath || ep.path;
+        html += `<div class="try-panel">
+          <div class="ep-label">Try It (GET only)</div>
+          <div class="try-row">
+            <input type="text" value="${tryPath}" id="try-input-${id}" readonly>
+            <button class="try-btn" onclick="tryEndpoint('${id}')">Send</button>
+          </div>
+          <pre class="response" id="try-result-${id}" style="display:none"></pre>
+        </div>`;
+      }
+
+      html += `</div></div>`;
+    });
+
+    html += `</div>`;
+  });
+
+  // Socket.IO events section
+  html += `<div class="section" id="section-socketio-events">`;
+  html += `<div class="section-head">
+    <div class="section-icon" style="background:var(--green-dim);color:var(--green)">WS</div>
+    <h3>Socket.IO Events Reference</h3>
+  </div>`;
+  html += `<p class="section-desc">Complete list of Socket.IO events for real-time communication. Connect to <code style="font-family:var(--mono);font-size:.8rem;background:var(--bg-3);padding:2px 6px;border-radius:2px">http://{host}/socket.io/</code> with reconnection enabled.</p>`;
+
+  html += `<div class="ep-label" style="margin:16px 0 8px">Client → Server (Emit)</div>`;
+  html += `<table class="socket-table"><tr><th>Event</th><th>Description</th></tr>`;
+  SOCKET_EVENTS.emit.forEach(e => html += `<tr><td>${e[0]}</td><td>${e[1]}</td></tr>`);
+  html += `</table>`;
+
+  html += `<div class="ep-label" style="margin:24px 0 8px">Server → Client (On)</div>`;
+  html += `<table class="socket-table"><tr><th>Event</th><th>Description</th></tr>`;
+  SOCKET_EVENTS.on.forEach(e => html += `<tr><td>${e[0]}</td><td>${e[1]}</td></tr>`);
+  html += `</table>`;
+
+  html += `<div class="ep-label" style="margin:24px 0 8px">Live Topics (subscribe via live:update)</div>`;
+  html += `<table class="socket-table"><tr><th>Topic</th><th>Description</th></tr>`;
+  SOCKET_EVENTS.topics.forEach(e => html += `<tr><td>${e[0]}</td><td>${e[1]}</td></tr>`);
+  html += `</table>`;
+
+  html += `</div>`;
+
+  // Keyset reference
+  html += `<div class="section" id="section-keyset-ref">`;
+  html += `<div class="section-head">
+    <div class="section-icon" style="background:var(--purple-dim);color:var(--purple)">REF</div>
+    <h3>Enum & Constant Reference</h3>
+  </div>`;
+
+  html += `<div class="ep-label" style="margin:0 0 8px">Keyset Activation States</div>`;
+  html += `<table class="socket-table"><tr><th>Value</th><th>Display Name</th></tr>`;
+  [["talk","Talk-Only"],["listen","Listen-Only"],["talklisten","Talk & Listen"],["dualtalklisten","Dual Talk & Listen"],
+   ["forcelisten","Force Listen"],["talkforcelisten","Talk & Force Listen"],["forcetalkforcelisten","Force Talk & Force Listen"]
+  ].forEach(e => html += `<tr><td>${e[0]}</td><td>${e[1]}</td></tr>`);
+  html += `</table>`;
+
+  html += `<div class="ep-label" style="margin:20px 0 8px">Talk Button Modes</div>`;
+  html += `<table class="socket-table"><tr><th>Value</th><th>Description</th></tr>`;
+  [["latching","Latching (toggle)"],["non-latching","Non-Latching (push-to-talk)"],["disabled","Disabled"]
+  ].forEach(e => html += `<tr><td>${e[0]}</td><td>${e[1]}</td></tr>`);
+  html += `</table>`;
+
+  html += `<div class="ep-label" style="margin:20px 0 8px">Port ID Ranges</div>`;
+  html += `<table class="socket-table"><tr><th>Range</th><th>Interface</th></tr>`;
+  [["65536-65538","Station (E1) — PGM, SA, HS"],["65792-65793","2-Wire Interface A"],
+   ["66048-66049","2-Wire Interface B"],["66304-66305","4-Wire Interface A"],["66560-66561","4-Wire Interface B"],
+   ["1000000+","Antennas (transceivers)"],["1-65535","Beltpacks"]
+  ].forEach(e => html += `<tr><td>${e[0]}</td><td>${e[1]}</td></tr>`);
+  html += `</table>`;
+
+  html += `<div class="ep-label" style="margin:20px 0 8px">2-Wire Modes</div>`;
+  html += `<table class="socket-table"><tr><th>Value</th><th>Description</th></tr>`;
+  [["ClearCom","Clear-Com party-line protocol"],["RTS","RTS party-line protocol"]
+  ].forEach(e => html += `<tr><td>${e[0]}</td><td>${e[1]}</td></tr>`);
+  html += `</table>`;
+
+  html += `</div>`;
+
+  container.innerHTML = html;
+}
+
+// ── INTERACTIONS ──
+function toggleEndpoint(id) {
+  const el = document.getElementById('ep-' + id);
+  el.classList.toggle('open');
+}
+
+function scrollToEndpoint(id) {
+  const el = document.getElementById('ep-' + id);
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    el.classList.add('open');
+    // highlight
+    el.style.borderColor = 'var(--accent)';
+    setTimeout(() => el.style.borderColor = '', 1500);
+  }
+  // close mobile sidebar
+  document.querySelector('.sidebar').classList.remove('open');
+}
+
+function filterEndpoints(query) {
+  const q = query.toLowerCase();
+  document.querySelectorAll('.endpoint').forEach(el => {
+    const match = el.dataset.search.toLowerCase().includes(q);
+    el.style.display = match ? '' : 'none';
+  });
+  document.querySelectorAll('.nav-item').forEach(el => {
+    const match = el.textContent.toLowerCase().includes(q);
+    el.style.display = match ? '' : 'none';
+  });
+}
+
+function syntaxHighlight(json) {
+  if (typeof json !== 'string') json = JSON.stringify(json, null, 2);
+  return json
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/("(\\u[\da-fA-F]{4}|\\[^u]|[^\\"])*"(\s*:)?)/g, (match) => {
+      if (/:$/.test(match)) return '<span class="key">' + match + '</span>';
+      return '<span class="str">' + match + '</span>';
+    })
+    .replace(/\b(-?\d+\.?\d*([eE][+-]?\d+)?)\b/g, '<span class="num">$1</span>')
+    .replace(/\b(true|false)\b/g, '<span class="bool">$1</span>')
+    .replace(/\bnull\b/g, '<span class="null">null</span>');
+}
+
+// ── MD5 implementation for Digest Auth ──
+const MD5 = (function() {
+  function safeAdd(x, y) { const l = (x & 0xFFFF) + (y & 0xFFFF); return (((x >> 16) + (y >> 16) + (l >> 16)) << 16) | (l & 0xFFFF); }
+  function bitRotateLeft(n, c) { return (n << c) | (n >>> (32 - c)); }
+  function md5cmn(q, a, b, x, s, t) { return safeAdd(bitRotateLeft(safeAdd(safeAdd(a, q), safeAdd(x, t)), s), b); }
+  function md5ff(a,b,c,d,x,s,t) { return md5cmn((b&c)|((~b)&d),a,b,x,s,t); }
+  function md5gg(a,b,c,d,x,s,t) { return md5cmn((b&d)|(c&(~d)),a,b,x,s,t); }
+  function md5hh(a,b,c,d,x,s,t) { return md5cmn(b^c^d,a,b,x,s,t); }
+  function md5ii(a,b,c,d,x,s,t) { return md5cmn(c^(b|(~d)),a,b,x,s,t); }
+  function binlMD5(x, len) {
+    x[len >> 5] |= 0x80 << (len % 32); x[((len + 64) >>> 9 << 4) + 14] = len;
+    let a = 1732584193, b = -271733879, c = -1732584194, d = 271733878;
+    for (let i = 0; i < x.length; i += 16) {
+      const oa = a, ob = b, oc = c, od = d;
+      a=md5ff(a,b,c,d,x[i],7,-680876936);d=md5ff(d,a,b,c,x[i+1],12,-389564586);c=md5ff(c,d,a,b,x[i+2],17,606105819);b=md5ff(b,c,d,a,x[i+3],22,-1044525330);
+      a=md5ff(a,b,c,d,x[i+4],7,-176418897);d=md5ff(d,a,b,c,x[i+5],12,1200080426);c=md5ff(c,d,a,b,x[i+6],17,-1473231341);b=md5ff(b,c,d,a,x[i+7],22,-45705983);
+      a=md5ff(a,b,c,d,x[i+8],7,1770035416);d=md5ff(d,a,b,c,x[i+9],12,-1958414417);c=md5ff(c,d,a,b,x[i+10],17,-42063);b=md5ff(b,c,d,a,x[i+11],22,-1990404162);
+      a=md5ff(a,b,c,d,x[i+12],7,1804603682);d=md5ff(d,a,b,c,x[i+13],12,-40341101);c=md5ff(c,d,a,b,x[i+14],17,-1502002290);b=md5ff(b,c,d,a,x[i+15],22,1236535329);
+      a=md5gg(a,b,c,d,x[i+1],5,-165796510);d=md5gg(d,a,b,c,x[i+6],9,-1069501632);c=md5gg(c,d,a,b,x[i+11],14,643717713);b=md5gg(b,c,d,a,x[i],20,-373897302);
+      a=md5gg(a,b,c,d,x[i+5],5,-701558691);d=md5gg(d,a,b,c,x[i+10],9,38016083);c=md5gg(c,d,a,b,x[i+15],14,-660478335);b=md5gg(b,c,d,a,x[i+4],20,-405537848);
+      a=md5gg(a,b,c,d,x[i+9],5,568446438);d=md5gg(d,a,b,c,x[i+14],9,-1019803690);c=md5gg(c,d,a,b,x[i+3],14,-187363961);b=md5gg(b,c,d,a,x[i+8],20,1163531501);
+      a=md5gg(a,b,c,d,x[i+13],5,-1444681467);d=md5gg(d,a,b,c,x[i+2],9,-51403784);c=md5gg(c,d,a,b,x[i+7],14,1735328473);b=md5gg(b,c,d,a,x[i+12],20,-1926607734);
+      a=md5hh(a,b,c,d,x[i+5],4,-378558);d=md5hh(d,a,b,c,x[i+8],11,-2022574463);c=md5hh(c,d,a,b,x[i+11],16,1839030562);b=md5hh(b,c,d,a,x[i+14],23,-35309556);
+      a=md5hh(a,b,c,d,x[i+1],4,-1530992060);d=md5hh(d,a,b,c,x[i+4],11,1272893353);c=md5hh(c,d,a,b,x[i+7],16,-155497632);b=md5hh(b,c,d,a,x[i+10],23,-1094730640);
+      a=md5hh(a,b,c,d,x[i+13],4,681279174);d=md5hh(d,a,b,c,x[i],11,-358537222);c=md5hh(c,d,a,b,x[i+3],16,-722521979);b=md5hh(b,c,d,a,x[i+6],23,76029189);
+      a=md5hh(a,b,c,d,x[i+9],4,-640364487);d=md5hh(d,a,b,c,x[i+12],11,-421815835);c=md5hh(c,d,a,b,x[i+15],16,530742520);b=md5hh(b,c,d,a,x[i+2],23,-995338651);
+      a=md5ii(a,b,c,d,x[i],6,-198630844);d=md5ii(d,a,b,c,x[i+7],10,1126891415);c=md5ii(c,d,a,b,x[i+14],15,-1416354905);b=md5ii(b,c,d,a,x[i+5],21,-57434055);
+      a=md5ii(a,b,c,d,x[i+12],6,1700485571);d=md5ii(d,a,b,c,x[i+3],10,-1894986606);c=md5ii(c,d,a,b,x[i+10],15,-1051523);b=md5ii(b,c,d,a,x[i+1],21,-2054922799);
+      a=md5ii(a,b,c,d,x[i+8],6,1873313359);d=md5ii(d,a,b,c,x[i+15],10,-30611744);c=md5ii(c,d,a,b,x[i+6],15,-1560198380);b=md5ii(b,c,d,a,x[i+13],21,1309151649);
+      a=md5ii(a,b,c,d,x[i+4],6,-145523070);d=md5ii(d,a,b,c,x[i+11],10,-1120210379);c=md5ii(c,d,a,b,x[i+2],15,718787259);b=md5ii(b,c,d,a,x[i+9],21,-343485551);
+      a = safeAdd(a, oa); b = safeAdd(b, ob); c = safeAdd(c, oc); d = safeAdd(d, od);
+    }
+    return [a, b, c, d];
+  }
+  function str2binl(str) {
+    const out = []; for (let i = 0; i < str.length * 8; i += 8) out[i >> 5] |= (str.charCodeAt(i / 8) & 0xFF) << (i % 32); return out;
+  }
+  function binl2hex(binarray) {
+    const hexTab = '0123456789abcdef'; let str = '';
+    for (let i = 0; i < binarray.length * 4; i++) str += hexTab.charAt((binarray[i >> 2] >> ((i % 4) * 8 + 4)) & 0xF) + hexTab.charAt((binarray[i >> 2] >> ((i % 4) * 8)) & 0xF);
+    return str;
+  }
+  return function(s) { return binl2hex(binlMD5(str2binl(s), s.length * 8)); };
+})();
+
+// ── Digest Auth fetch ──
+let nc = 0;
+async function digestFetch(url, username, password) {
+  // Step 1: initial request to get the challenge
+  const initial = await fetch(url, { method: 'GET' });
+  if (initial.ok) return initial; // no auth needed
+
+  const wwwAuth = initial.headers.get('WWW-Authenticate');
+  if (!wwwAuth || !wwwAuth.startsWith('Digest')) {
+    throw new Error('Server did not return Digest challenge. Got: ' + (wwwAuth || 'no WWW-Authenticate header'));
+  }
+
+  // Parse challenge
+  const parse = (key) => { const m = wwwAuth.match(new RegExp(key + '="([^"]*)"')); return m ? m[1] : ''; };
+  const realm = parse('realm');
+  const nonce = parse('nonce');
+  const qop = parse('qop');
+  const opaque = parse('opaque');
+  const uri = new URL(url).pathname + new URL(url).search;
+
+  // Step 2: compute response
+  nc++;
+  const ncHex = ('00000000' + nc.toString(16)).slice(-8);
+  const cnonce = Math.random().toString(36).substring(2, 18);
+
+  const ha1 = MD5(`${username}:${realm}:${password}`);
+  const ha2 = MD5(`GET:${uri}`);
+  const response = qop
+    ? MD5(`${ha1}:${nonce}:${ncHex}:${cnonce}:${qop}:${ha2}`)
+    : MD5(`${ha1}:${nonce}:${ha2}`);
+
+  let authHeader = `Digest username="${username}", realm="${realm}", nonce="${nonce}", uri="${uri}", response="${response}", opaque="${opaque}"`;
+  if (qop) authHeader += `, qop=${qop}, nc=${ncHex}, cnonce="${cnonce}"`;
+
+  // Step 3: authenticated request
+  return fetch(url, {
+    method: 'GET',
+    headers: { 'Authorization': authHeader }
+  });
+}
+
+async function tryEndpoint(id) {
+  const input = document.getElementById('try-input-' + id);
+  const result = document.getElementById('try-result-' + id);
+  const host = document.getElementById('cfgHost').value;
+  const user = document.getElementById('cfgUser').value;
+  const pass = document.getElementById('cfgPass').value;
+  const path = input.value;
+
+  if (!host) { result.style.display = 'block'; result.innerHTML = '<span style="color:var(--amber)">Enter your base station IP in the Connection panel above.</span>'; return; }
+
+  result.style.display = 'block';
+  result.innerHTML = '<span style="color:var(--text-3)">Fetching...</span>';
+
+  try {
+    const url = `http://${host}${path}`;
+    const resp = await digestFetch(url, user, pass);
+    if (!resp.ok) {
+      result.innerHTML = `<span style="color:var(--red)">HTTP ${resp.status} ${resp.statusText}</span>`;
+      return;
+    }
+    const text = await resp.text();
+    try {
+      const json = JSON.parse(text);
+      result.innerHTML = syntaxHighlight(JSON.stringify(json, null, 2));
+    } catch {
+      result.textContent = text.substring(0, 2000);
+    }
+  } catch (err) {
+    result.innerHTML = `<span style="color:var(--red)">Error: ${err.message}</span>\n\n<span style="color:var(--text-3)">If you're loading this page from the internet (GitHub Pages), your browser\nblocks requests to local network devices (mixed content / CORS).\n\nTo use "Try It", open this file locally:\n  1. Download index.html to a computer on the same network\n  2. Open it directly in your browser (file://)\n\nOr use curl:\n<span style="color:var(--text-1)">curl --digest -u ${user}:${pass} http://${host}${path}</span></span>`;
+  }
+}
+
+async function testConnection() {
+  const status = document.getElementById('connStatus');
+  const host = document.getElementById('cfgHost').value;
+  const user = document.getElementById('cfgUser').value;
+  const pass = document.getElementById('cfgPass').value;
+
+  if (!host) { status.className = 'conn-status err'; status.textContent = 'Enter your base station IP above.'; return; }
+
+  status.className = 'conn-status';
+  status.textContent = 'Testing connection...';
+
+  try {
+    const resp = await digestFetch(`http://${host}/api/1/devices/`, user, pass);
+    if (resp.ok) {
+      const data = await resp.json();
+      status.className = 'conn-status ok';
+      status.textContent = `Connected — ${data[0]?.device_label || 'Unknown'} (${data[0]?.versionSW || '?'})`;
+      document.getElementById('statusDot').className = 'dot on';
+      document.getElementById('statusText').textContent = 'online';
+    } else {
+      status.className = 'conn-status err';
+      status.textContent = `HTTP ${resp.status} — check credentials`;
+    }
+  } catch (err) {
+    status.className = 'conn-status err';
+    status.textContent = `Connection failed. If loading from the internet, open this page locally (file://) on the same network as your base station.`;
+    document.getElementById('statusDot').className = 'dot off';
+    document.getElementById('statusText').textContent = 'unreachable';
+  }
+}
+
+// ── INIT ──
+const isRemote = location.protocol === 'https:' || (location.protocol === 'http:' && !location.hostname.match(/^(localhost|127\.|192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/));
+
+if (isRemote) {
+  document.body.classList.add('is-remote');
+  document.getElementById('statusDot').className = 'dot off';
+  document.getElementById('statusText').textContent = 'read-only';
+}
+
+buildSidebar();
+buildSections();
+
+// Only auto-connect when loaded locally with credentials filled in
+if (!isRemote && document.getElementById('cfgHost').value) {
+  setTimeout(testConnection, 500);
+}
+</script>
+</body>
+</html>
